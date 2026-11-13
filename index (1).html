@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>MLBB Open Forum</title>
+<meta name="description" content="Open chat for Mobile Legends players: global, regional and country servers.">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<style>
+:root{--bg:#090d1f;--surf:#121933;--surf2:#1a2347;--surf3:#232e5c;--text:#f0f2ff;--mute:#8d99c9;--gold:#f6b94a;--accent:#6c7bff;--me:#3446b8;--line:#263060;--rc:#6c7bff;--c:#6c7bff;--sh:0 8px 30px #0008;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){--bg:#eef1ff;--surf:#fff;--surf2:#edf0ff;--surf3:#dde3ff;--text:#151a3a;--mute:#5b6592;--gold:#b87a00;--accent:#4a5af0;--me:#dbe2ff;--line:#d5dcf6;--sh:0 8px 30px #2a356a30;color-scheme:light}}
+:root[data-theme="light"]{--bg:#eef1ff;--surf:#fff;--surf2:#edf0ff;--surf3:#dde3ff;--text:#151a3a;--mute:#5b6592;--gold:#b87a00;--accent:#4a5af0;--me:#dbe2ff;--line:#d5dcf6;--sh:0 8px 30px #2a356a30;color-scheme:light}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;margin:0}
+body{background:var(--bg);color:var(--text);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;flex-direction:column;overflow:hidden}
+button{font:inherit;color:inherit;cursor:pointer}
+header{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surf);border-bottom:1px solid var(--line);position:relative;z-index:2}
+header::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:2px;background:linear-gradient(90deg,transparent,var(--c),transparent)}
+.ib{width:38px;height:38px;border-radius:12px;border:1px solid var(--line);background:var(--surf2);display:grid;place-items:center;font-size:18px}
+.rm{flex:1;min-width:0;display:flex;align-items:center;gap:10px}
+.ico{flex:none;width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:20px;background:linear-gradient(135deg,var(--c),color-mix(in srgb,var(--c) 55%,#000))}
+.rm b{display:block;font-size:16px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rm small{display:block;font-size:11.5px;color:var(--mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:13px;color:#fff}
+.pf{padding:0;border:2px solid var(--line);background:none;border-radius:50%;width:38px;height:38px;display:grid;place-items:center}
+#note{position:absolute;left:50%;top:100%;transform:translate(-50%,8px);background:var(--surf3);color:var(--text);font-size:12px;padding:6px 12px;border-radius:99px;box-shadow:var(--sh);opacity:0;pointer-events:none;transition:.25s;white-space:nowrap;z-index:4}
+#note.on{opacity:1;transform:translate(-50%,12px)}
+.wrap{position:relative;flex:1;min-height:0;display:flex;flex-direction:column;background:radial-gradient(120% 60% at 50% 0,color-mix(in srgb,var(--c) 14%,transparent),transparent)}
+#feed{flex:1;overflow-y:auto;padding:10px 12px 6px;display:flex;flex-direction:column;gap:2px;overscroll-behavior:contain}
+.hello{margin:6px auto 10px;text-align:center;max-width:320px;padding:16px;border:1px solid var(--line);border-radius:20px;background:var(--surf);box-shadow:var(--sh)}
+.hello .ico{width:54px;height:54px;font-size:28px;margin:0 auto 8px;border-radius:16px}
+.hello h3{margin:0 0 2px;font-size:17px}
+.hello p{margin:0;font-size:12.5px;color:var(--mute)}
+.day{align-self:center;font-size:11px;color:var(--mute);background:var(--surf);border:1px solid var(--line);border-radius:99px;padding:2px 11px;margin:10px 0 4px}
+.row{display:flex;gap:8px;align-items:flex-end;margin-top:9px;max-width:92%;animation:pop .22s ease-out}
+.row.same{margin-top:1px}
+.row.mine{align-self:flex-end;flex-direction:row-reverse}
+.row.same .av{visibility:hidden}
+@keyframes pop{from{opacity:0;transform:translateY(6px)}}
+.m{background:var(--surf);border:1px solid var(--line);border-radius:16px 16px 16px 5px;padding:6px 11px 5px;overflow-wrap:anywhere;box-shadow:0 1px 0 #0003}
+.row.mine .m{background:var(--me);border-color:transparent;border-radius:16px 16px 5px 16px}
+.m.lfg{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 0 18px color-mix(in srgb,var(--gold) 25%,transparent)}
+.who{font-size:12.5px;font-weight:650;display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:1px}
+.rk{font-size:9.5px;font-weight:800;letter-spacing:.02em;padding:1px 7px;border-radius:99px;background:var(--rc);color:#fff}
+.tag{font-size:9.5px;font-weight:800;color:#1a1300;background:var(--gold);padding:1px 7px;border-radius:99px}
+.tm{font-size:10px;color:var(--mute);margin-left:8px;white-space:nowrap}
+.del{border:0;background:none;color:var(--mute);font-size:12px;padding:0 0 0 6px}
+.sk{height:44px;border-radius:16px;background:linear-gradient(90deg,var(--surf),var(--surf2),var(--surf));background-size:200% 100%;animation:sh 1.2s infinite;margin-top:10px;width:60%}
+.sk:nth-child(even){align-self:flex-end;width:48%}
+@keyframes sh{to{background-position:-200% 0}}
+#jump{position:absolute;right:14px;bottom:10px;display:none;background:var(--accent);color:#fff;border:0;border-radius:99px;padding:8px 14px;font-size:12px;font-weight:600;box-shadow:var(--sh)}
+.comp{background:var(--surf);border-top:1px solid var(--line);padding:8px 10px}
+#emo{display:none;gap:4px;overflow-x:auto;padding:0 0 8px;scrollbar-width:none}
+#emo button{flex:none;border:0;background:var(--surf2);border-radius:10px;width:38px;height:36px;font-size:19px}
+form{display:flex;gap:8px;align-items:flex-end}
+.box{flex:1;display:flex;align-items:flex-end;background:var(--surf2);border:1px solid var(--line);border-radius:22px;padding:2px 4px 2px 4px;position:relative}
+.box:focus-within{border-color:var(--c)}
+#txt{flex:1;border:0;background:none;color:var(--text);font:inherit;resize:none;max-height:110px;padding:9px 6px;outline:none;min-width:0}
+.chip{flex:none;border:0;background:none;color:var(--mute);height:38px;min-width:34px;border-radius:99px;font-size:15px}
+.chip.on{background:var(--gold);color:#1a1300;font-weight:800;font-size:12px;padding:0 10px}
+#cnt{position:absolute;right:12px;top:-16px;font-size:10px;color:var(--mute);display:none}
+.send{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:linear-gradient(135deg,var(--gold),#e0602b);color:#1a1300;font-size:18px;font-weight:800;display:grid;place-items:center}
+.send:active{transform:scale(.94)}
+#dim{position:fixed;inset:0;background:#0009;opacity:0;pointer-events:none;transition:.25s;z-index:6}
+#dim.on{opacity:1;pointer-events:auto}
+#drawer{position:fixed;top:0;bottom:0;left:0;width:min(86vw,340px);background:var(--surf);border-right:1px solid var(--line);transform:translateX(-102%);transition:transform .28s cubic-bezier(.2,.8,.2,1);z-index:7;display:flex;flex-direction:column;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-shadow:var(--sh)}
+#drawer.on{transform:none}
+.dh{padding:14px 14px 8px}
+.dh h2{margin:0 0 10px;font-size:17px}
+.dh h2 span{color:var(--gold)}
+#q{width:100%;border:1px solid var(--line);background:var(--surf2);color:var(--text);border-radius:12px;padding:10px 12px;font:inherit;outline:none}
+#list{flex:1;overflow-y:auto;padding:0 8px 16px}
+.sec{font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--mute);padding:14px 8px 6px}
+.it{width:100%;display:flex;align-items:center;gap:10px;border:0;background:none;text-align:left;padding:8px;border-radius:12px}
+.it:hover,.it.on{background:var(--surf2)}
+.it.on{box-shadow:inset 3px 0 0 var(--c)}
+.it .ico{width:34px;height:34px;font-size:18px;border-radius:10px}
+.it b{display:block;font-size:14px;line-height:1.2}
+.it small{display:block;font-size:11px;color:var(--mute)}
+#setup{position:fixed;inset:0;background:#050816c8;backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:20px;z-index:9}
+.card{background:var(--surf);border:1px solid var(--line);border-radius:22px;padding:20px;width:100%;max-width:370px;display:flex;flex-direction:column;gap:10px;box-shadow:var(--sh)}
+.card h2{margin:0;font-size:19px}
+.card p{margin:0;color:var(--mute);font-size:13px}
+.card label{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--mute);margin-bottom:-4px}
+.card input,.card select{font:inherit;color:var(--text);background:var(--surf2);border:1px solid var(--line);border-radius:12px;padding:11px 12px;outline:none;width:100%}
+.go{border:0;border-radius:12px;padding:13px;font-weight:800;background:linear-gradient(135deg,var(--gold),#e0602b);color:#1a1300;margin-top:4px}
+</style>
+</head>
+<body>
+<header><button class="ib" id="menu" aria-label="Servers">☰</button><div class="rm"><span class="ico" id="hIco"></span><div style="min-width:0"><b id="hName"></b><small id="hSub"></small></div></div><button class="pf" id="meBtn" aria-label="Profile"><span class="av" id="meAv">?</span></button><div id="note"></div></header>
+<div class="wrap"><div id="feed"></div><button id="jump">↓ New messages</button></div>
+<div class="comp"><div id="emo"></div>
+<form id="f" autocomplete="off"><div class="box"><span id="cnt"></span><button type="button" class="chip" id="emb" aria-label="Emoji">😊</button><textarea id="txt" rows="1" maxlength="300" placeholder="Message…" enterkeyhint="send"></textarea><button type="button" class="chip" id="lfg">🔍 LFG</button></div><button class="send" aria-label="Send">➤</button></form></div>
+
+<div id="dim"></div>
+<aside id="drawer"><div class="dh"><h2>⚔️ <span>MLBB</span> Open Forum</h2><input id="q" placeholder="Search country or region…" type="search"></div><div id="list"></div></aside>
+
+<div id="setup"><div class="card"><h2>Welcome, Summoner 👋</h2><p>Set up your player card. You can change it anytime.</p>
+<label>In-game name</label><input id="ign" maxlength="20" placeholder="e.g. Layla Main">
+<label>Rank</label><select id="rank"><option>Warrior</option><option>Elite</option><option>Master</option><option>Grandmaster</option><option>Epic</option><option>Legend</option><option selected>Mythic</option><option>Mythical Honor</option><option>Mythical Glory</option><option>Mythical Immortal</option></select>
+<label>Country</label><select id="cc"></select>
+<button class="go" id="saveBtn">Enter the lobby</button></div></div>
+
+<script>
+// ===== Supabase project: MLBB Forum (the anon key is public by design) =====
+const SB_URL="https://lprsqybipramahejecgj.supabase.co",SB_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxwcnNxeWJpcHJhbWFoZWplY2dqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1MzkwODIsImV4cCI6MjExMDExNTA4Mn0.Y6M5nztT4JAwJh80Ko2_U6lWqVS7BRWoWjMkCCa7mPI";
+// =====================================================================
+let sb=null,chan=null,msgs=[];
+const REG=[
+{id:"sea",n:"SEA",e:"🌏",d:"Southeast Asia",c:"#1fa97a"},
+{id:"sa",n:"South Asia",e:"🕌",d:"South Asia",c:"#d9534f"},
+{id:"ea",n:"East Asia",e:"🗾",d:"East Asia",c:"#e11d74"},
+{id:"mena",n:"MENA",e:"🏜️",d:"Middle East & North Africa",c:"#b8860b"},
+{id:"eu",n:"Europe",e:"🏰",d:"Europe, Turkey & CIS",c:"#3b82f6"},
+{id:"na",n:"North America",e:"🗽",d:"USA & Canada",c:"#8b5cf6"},
+{id:"latam",n:"LATAM",e:"🌎",d:"Latin America & Brazil",c:"#16a34a"},
+{id:"africa",n:"Africa",e:"🦁",d:"Sub-Saharan Africa",c:"#c2410c"},
+{id:"oce",n:"Oceania",e:"🦘",d:"Australia, NZ & Pacific",c:"#0891b2"}];
+const CTY=[["PH","Philippines","sea"],["ID","Indonesia","sea"],["MY","Malaysia","sea"],["SG","Singapore","sea"],["TH","Thailand","sea"],["VN","Vietnam","sea"],["KH","Cambodia","sea"],["MM","Myanmar","sea"],["IN","India","sa"],["BD","Bangladesh","sa"],["PK","Pakistan","sa"],["NP","Nepal","sa"],["LK","Sri Lanka","sa"],["JP","Japan","ea"],["KR","South Korea","ea"],["TW","Taiwan","ea"],["SA","Saudi Arabia","mena"],["AE","UAE","mena"],["EG","Egypt","mena"],["IQ","Iraq","mena"],["MA","Morocco","mena"],["DZ","Algeria","mena"],["TR","Türkiye","eu"],["RU","Russia","eu"],["DE","Germany","eu"],["FR","France","eu"],["GB","United Kingdom","eu"],["ES","Spain","eu"],["IT","Italy","eu"],["PL","Poland","eu"],["US","United States","na"],["CA","Canada","na"],["MX","Mexico","latam"],["BR","Brazil","latam"],["AR","Argentina","latam"],["CL","Chile","latam"],["CO","Colombia","latam"],["PE","Peru","latam"],["NG","Nigeria","africa"],["ZA","South Africa","africa"],["KE","Kenya","africa"],["GH","Ghana","africa"],["AU","Australia","oce"],["NZ","New Zealand","oce"]];
+const RANKC={Warrior:"#7a6a58",Elite:"#6b7280",Master:"#3b82a0",Grandmaster:"#2f9e6b",Epic:"#8b5cf6",Legend:"#d946ef",Mythic:"#e0602b","Mythical Honor":"#dc2626","Mythical Glory":"#c026d3","Mythical Immortal":"#c9930f"};
+const flag=cc=>cc.toUpperCase().replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0)));
+const ROOMS={global:{id:"global",n:"Global",e:"🌍",d:"Open to players from every region",c:"#e0902b",sub:"Worldwide · all ranks welcome"}};
+REG.forEach(r=>ROOMS[r.id]={id:r.id,n:r.n,e:r.e,d:r.d,c:r.c,sub:"Regional server · "+r.d});
+CTY.forEach(([k,n,rg])=>{const R=ROOMS[rg];ROOMS["c_"+k.toLowerCase()]={id:"c_"+k.toLowerCase(),n,e:flag(k),d:n,c:R.c,sub:"Country chat · "+R.n,reg:rg}});
+const $=id=>document.getElementById(id);
+const EMO=["🔥","😂","👍","🛡️","⚔️","💀","😭","👑","🎯","🤝","❤️","GG"];
+let room="global",db=null,uid=null,isOwner=false,unsub=null,lastSend=0,isLfg=false,lastCount=0,toast=0,prof={ign:"",rank:"Mythic",cc:"PH"};
+try{const p=JSON.parse(localStorage.getItem("mlbb_prof")||"null");if(p&&p.ign)prof=Object.assign(prof,p)}catch(e){}
+try{uid=localStorage.getItem("mlbb_cid")||("c"+Math.random().toString(36).slice(2,10));localStorage.setItem("mlbb_cid",uid)}catch(e){uid=uid||"c"+Math.random().toString(36).slice(2,10)}
+const local={};
+const hue=s=>{let h=0;for(const c of s)h=(h*31+c.charCodeAt(0))%360;return h};
+function avatar(el,name){el.textContent=(name||"?").trim().charAt(0).toUpperCase();el.style.background="hsl("+hue(name||"?")+" 55% 45%)"}
+function say(t){const n=$("note");n.textContent=t;n.classList.add("on");clearTimeout(toast);toast=setTimeout(()=>n.classList.remove("on"),2600)}
+function ico(r,cls){const s=document.createElement("span");s.className="ico"+(cls?" "+cls:"");s.style.setProperty("--c",r.c);s.textContent=r.e;return s}
+
+function drawer(){
+ const q=$("q").value.trim().toLowerCase(),L=$("list");L.textContent="";
+ const sec=t=>{const d=document.createElement("div");d.className="sec";d.textContent=t;L.appendChild(d)};
+ const item=r=>{const b=document.createElement("button");b.className="it"+(r.id===room?" on":"");b.style.setProperty("--c",r.c);const t=document.createElement("div");const n=document.createElement("b");n.textContent=r.n;const s=document.createElement("small");s.textContent=r.reg?ROOMS[r.reg].n:(r.id==="global"?"All regions":r.d);t.append(n,s);b.append(ico(r),t);b.onclick=()=>{go(r.id);closeD()};L.appendChild(b)};
+ const hit=r=>!q||r.n.toLowerCase().includes(q)||(r.d||"").toLowerCase().includes(q);
+ if(!q){sec("Global");item(ROOMS.global);const mine=ROOMS["c_"+(prof.cc||"").toLowerCase()];if(mine){sec("Your country");item(mine)}}
+ const rs=REG.map(r=>ROOMS[r.id]).filter(hit);if(rs.length){sec("Regional servers");rs.forEach(item)}
+ REG.forEach(g=>{const cs=CTY.filter(c=>c[2]===g.id).map(c=>ROOMS["c_"+c[0].toLowerCase()]).filter(hit);if(cs.length){sec(g.n+" countries");cs.forEach(item)}});
+ if(q&&!L.children.length){const d=document.createElement("div");d.className="sec";d.textContent="No matches";L.appendChild(d)}
+}
+function openD(){drawer();$("drawer").classList.add("on");$("dim").classList.add("on")}
+function closeD(){$("drawer").classList.remove("on");$("dim").classList.remove("on")}
+$("menu").onclick=openD;$("dim").onclick=closeD;$("q").oninput=drawer;
+
+function go(id){
+ room=id;lastCount=0;const r=ROOMS[id];
+ $("hIco").replaceWith(Object.assign(ico(r),{id:"hIco"}));$("hName").textContent=r.n;$("hSub").textContent=r.sub;
+ document.documentElement.style.setProperty("--c",r.c);
+ $("txt").placeholder="Message "+(r.reg?r.e+" ":"")+r.n+"…";sub();
+}
+function hello(f){const r=ROOMS[room],h=document.createElement("div");h.className="hello";h.appendChild(ico(r));
+ const t=document.createElement("h3");t.textContent="Welcome to "+r.n;const p=document.createElement("p");p.textContent=r.sub+". Be kind, play fair, and use LFG to find a squad.";h.append(t,p);f.appendChild(h)}
+function skeleton(){const f=$("feed");f.textContent="";hello(f);for(let i=0;i<4;i++){const s=document.createElement("div");s.className="sk";f.appendChild(s)}}
+function render(list){
+ const f=$("feed");const near=f.scrollHeight-f.scrollTop-f.clientHeight<140;const first=f.dataset.first!==room;f.textContent="";hello(f);
+ let pu=null,pd=null,pt=0;
+ list.forEach(m=>{
+  const dt=new Date(m.ts),ds=dt.toDateString();
+  if(ds!==pd){const d=document.createElement("div");d.className="day";d.textContent=ds===new Date().toDateString()?"Today":dt.toLocaleDateString([],{month:"short",day:"numeric"});f.appendChild(d);pu=null}
+  const same=pu===m.uid&&m.ts-pt<120000;pu=m.uid;pd=ds;pt=m.ts;
+  const row=document.createElement("div");row.className="row"+(m.uid===uid?" mine":"")+(same?" same":"");
+  const av=document.createElement("span");av.className="av";avatar(av,m.ign);
+  const b=document.createElement("div");b.className="m"+(m.lfg?" lfg":"");
+  if(!same){const w=document.createElement("div");w.className="who";const n=document.createElement("span");n.textContent=(m.cc?flag(String(m.cc).slice(0,2))+" ":"")+(m.ign||"Player");n.style.color="hsl("+hue(m.ign||"?")+" 70% 66%)";
+   const rk=document.createElement("span");rk.className="rk";rk.textContent=m.rank||"";rk.style.setProperty("--rc",RANKC[m.rank]||"#6c7bff");w.append(n,rk);
+   if(m.lfg){const g=document.createElement("span");g.className="tag";g.textContent="LFG";w.appendChild(g)}b.appendChild(w)}
+  const t=document.createElement("span");t.textContent=m.text;b.appendChild(t);
+  const tm=document.createElement("span");tm.className="tm";tm.textContent=dt.toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"});b.appendChild(tm);
+  if(isOwner&&m._id){const x=document.createElement("button");x.className="del";x.textContent="🗑";x.onclick=()=>{try{db.doc("msgs_"+room+"/"+m._id).delete()}catch(e){}};b.appendChild(x)}
+  row.append(av,b);f.appendChild(row)});
+ const fresh=list.length>lastCount&&lastCount>0;lastCount=list.length;
+ if(near||first){f.scrollTop=f.scrollHeight;f.dataset.first=room;$("jump").style.display="none"}else if(fresh)$("jump").style.display="block";
+}
+$("feed").onscroll=e=>{const f=e.target;if(f.scrollHeight-f.scrollTop-f.clientHeight<60)$("jump").style.display="none"};
+$("jump").onclick=()=>{$("feed").scrollTop=1e9};
+const mapRow=r=>({_id:r.id,text:r.text,ign:r.ign,rank:r.rank,cc:r.cc,uid:r.uid,lfg:r.lfg,ts:Date.parse(r.ts)});
+function push(r){if(msgs.some(x=>x._id===r.id))return;msgs.push(mapRow(r));msgs.sort((x,y)=>x.ts-y.ts);if(msgs.length>150)msgs.shift();render(msgs)}
+async function sub(){
+ if(chan&&sb){sb.removeChannel(chan);chan=null}
+ $("feed").dataset.first="";$("jump").style.display="none";msgs=[];
+ if(!sb){render(local[room]||[]);return}
+ skeleton();const my=room;
+ const {data,error}=await sb.from("messages").select("*").eq("room",my).order("ts",{ascending:false}).limit(100);
+ if(my!==room)return;
+ if(error){say("Chat unavailable");return}
+ msgs=data.map(mapRow).reverse();render(msgs);
+ chan=sb.channel("room-"+my).on("postgres_changes",{event:"INSERT",schema:"public",table:"messages",filter:"room=eq."+my},p=>push(p.new))
+  .on("postgres_changes",{event:"DELETE",schema:"public",table:"messages"},p=>{const n=msgs.length;msgs=msgs.filter(x=>x._id!==p.old.id);if(msgs.length!==n)render(msgs)}).subscribe();
+}
+const T=$("txt");
+T.oninput=()=>{T.style.height="auto";T.style.height=Math.min(T.scrollHeight,110)+"px";const c=$("cnt");c.style.display=T.value.length>240?"block":"none";c.textContent=T.value.length+"/300"};
+T.onkeydown=e=>{if(e.key==="Enter"&&!e.shiftKey){e.preventDefault();$("f").requestSubmit()}};
+$("lfg").onclick=()=>{isLfg=!isLfg;$("lfg").classList.toggle("on",isLfg)};
+EMO.forEach(x=>{const b=document.createElement("button");b.type="button";b.textContent=x;b.onclick=()=>{T.value+=x;T.focus();T.oninput()};$("emo").appendChild(b)});
+$("emb").onclick=()=>{const e=$("emo");e.style.display=e.style.display==="flex"?"none":"flex"};
+$("f").onsubmit=async e=>{
+ e.preventDefault();const text=T.value.trim();if(!text)return;
+ if(!prof.ign){openSetup();return}
+ if(Date.now()-lastSend<1500){say("Easy there, slow down a little");return}
+ lastSend=Date.now();T.value="";T.oninput();
+ const m={text:text.slice(0,300),ign:prof.ign,rank:prof.rank,cc:prof.cc,uid,ts:Date.now(),lfg:isLfg};
+ isLfg=false;$("lfg").classList.remove("on");
+ if(!sb){(local[room]=local[room]||[]).push(m);render(local[room]);$("feed").scrollTop=1e9;return}
+ const {data,error}=await sb.from("messages").insert({room,uid,ign:m.ign,rank:m.rank,cc:m.cc,text:m.text,lfg:m.lfg}).select().single();
+ if(error)say(String(error.message||"").includes("slow")?"Easy there, slow down":"Couldn't send. Try again");else{push(data);$("feed").scrollTop=1e9}
+};
+CTY.forEach(([k,n])=>{const o=document.createElement("option");o.value=k;o.textContent=flag(k)+" "+n;$("cc").appendChild(o)});
+function openSetup(){$("ign").value=prof.ign;$("rank").value=prof.rank;$("cc").value=prof.cc||"PH";$("setup").style.display="flex";$("ign").focus()}
+$("meBtn").onclick=openSetup;
+$("ign").onkeydown=e=>{if(e.key==="Enter")$("saveBtn").click()};
+$("saveBtn").onclick=()=>{const n=$("ign").value.trim();if(!n){$("ign").focus();return}
+ const first=!prof.ign;prof={ign:n,rank:$("rank").value,cc:$("cc").value};try{localStorage.setItem("mlbb_prof",JSON.stringify(prof))}catch(e){}
+ $("setup").style.display="none";avatar($("meAv"),prof.ign);if(first){const k="c_"+prof.cc.toLowerCase();if(ROOMS[k])go(k)}};
+avatar($("meAv"),prof.ign||"?");go(prof.ign&&ROOMS["c_"+(prof.cc||"").toLowerCase()]?"c_"+prof.cc.toLowerCase():"global");if(!prof.ign)openSetup();
+try{if(window.supabase&&!!SB_URL){sb=supabase.createClient(SB_URL,SB_KEY);sub()}else say("Preview mode: add your Supabase keys")}catch(e){say("Offline preview")}
+</script>
+</body>
+</html>
